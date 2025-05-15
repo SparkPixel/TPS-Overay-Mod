@@ -27,26 +27,6 @@ A lightweight Minecraft Forge mod that displays the server's ticks-per-second (T
 3. Launch Minecraft with the **Forge 1.8.9** profile.
 4. Join a multiplayer server and watch the TPS readout in the top-left corner.
 
-### For Developers
-
-1. Clone this repository:
-
-   ```bash
-   git clone https://github.com/yourusername/tpsoverlay.git
-   cd tpsoverlay
-   ```
-2. Use the supplied Gradle wrapper to set up the dev environment:
-
-   ```bash
-   ./gradlew setupDecompWorkspace eclipse   # or idea
-   ```
-3. Build the mod:
-
-   ```bash
-   ./gradlew clean build
-   ```
-4. Find your compiled `.jar` in `build/libs/` and drop it into your local `mods/` folder for testing.
-
 ## Usage
 
 * The TPS overlay appears automatically when connected to any **remote** server.
