@@ -3,7 +3,7 @@
     "modid": "tpsoverlay",
     "name": "TPS Overlay",
     "description": "Displays the current server TPS on your screen.",
-    "version": "1.0",
+    "version": "1.1",
     "mcversion": "1.8.9",
     "authorList": ["SparkPixel"],
     "url": "",
