@@ -45,7 +45,7 @@ The entire algorithm lives in **`TPSOverlayMod.java`** (≈ 180 LOC) and runs 
 
 ## 🙋 FAQ
 
-> **Q: Is this bannable on Hypixel / competitive servers?**
+> **Q: Is this bannable on competitive servers?**
 > **A:** The mod is purely cosmetic and never modifies gameplay packets. It’s functionally similar to status HUD mods commonly whitelisted by Hypixel. As always, use at your own risk and keep the jar unmodified.
 
 > **Q: Why does the overlay sometimes freeze at 20 TPS?**
