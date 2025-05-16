@@ -52,7 +52,3 @@ The entire algorithm lives in **`TPSOverlayMod.java`** (≈ 180 LOC) and runs 
 > **A:** If the server suppresses both time‑update and keep‑alive packets during extreme lag, there’s no new data to sample. The display holds the last value until packets resume.
 
 ---
-
-## 📜 License
-
-This project is licensed under the **MIT License** – see `LICENSE` for details.
