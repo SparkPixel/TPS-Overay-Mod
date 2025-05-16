@@ -1,7 +1,7 @@
 # TPS Overlay – Forge 1.8.9
 
 A lightweight client‑side mod that prints the **server TPS** in the upper‑left corner of your HUD.
-Version **1.1** adds a keep‑alive fallback so it works on large networks such as **Hypixel SkyBlock**.
+Version **1.1** adds a keep‑alive fallback so it works on large networks.
 
 ---
 
