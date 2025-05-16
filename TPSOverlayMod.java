@@ -55,7 +55,9 @@ public class TPSOverlayMod {
     private long lastTimeUpdateNanos = -1;
 
     // ── state for S00‑based fallback sampling ────────────────────────────
-    private long lastKeepAliveNanos = -1;
+    private long   lastKeepAliveNanos        = -1;
+    /** learned “normal” keep‑alive interval for this connection (ns) */
+    private Double keepAliveBaseIntervalNanos = null;
 
     /**
      * Called for every S03PacketTimeUpdate that advances the day‑cycle.
@@ -81,19 +83,29 @@ public class TPSOverlayMod {
      * once per second, depending on the fork/config).   We derive an estimated
      * TPS by comparing the observed interval with the *ideal* 50 ms tick.
      */
-    private void recordKeepAlive() {
-        final long now = System.nanoTime();
+private void recordKeepAlive() {
+    final long now = System.nanoTime();
 
-        if (lastKeepAliveNanos != -1) {
-            long nanosElapsed = now - lastKeepAliveNanos;
-            if (nanosElapsed > 0L) {
-                // Ideal cadence is 50 ms per tick × 20 = 1 000 ms.   Scale accordingly.
-                double tps = 20D * 1_000_000_000D / nanosElapsed;
-                addSample(tps);
-            }
+    if (lastKeepAliveNanos != -1) {
+        long nanosElapsed = now - lastKeepAliveNanos;
+
+        // ‑‑ learn or slowly re‑learn the server’s usual cadence
+        if (keepAliveBaseIntervalNanos == null) {
+            keepAliveBaseIntervalNanos = (double) nanosElapsed;         // first sample
+        } else {
+            // low‑pass filter: 90 % old + 10 % new, so big spikes don’t distort the baseline
+            keepAliveBaseIntervalNanos =
+                    keepAliveBaseIntervalNanos * 0.9 + nanosElapsed * 0.1;
         }
-        lastKeepAliveNanos = now;
+
+        // TPS = (ideal 20 TPS) × (baseline / observed interval)
+        double tps = keepAliveBaseIntervalNanos / nanosElapsed * 20D;
+        addSample(tps);
     }
+
+    lastKeepAliveNanos = now;
+}
+
 
     /** Common aggregation path for both sampling strategies. */
     private void addSample(double tps) {
@@ -123,38 +135,44 @@ public class TPSOverlayMod {
         Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(text, 2, 2, 0xFFFFFF);
     }
 
-    /* ------------------------------------------------------------------ */
-    /*  Netty injection                                                   */
-    /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/*  Netty injection                                                   */
+/* ------------------------------------------------------------------ */
 
-    private final class NetHook {
+private final class NetHook {
 
-        /** install the handler once for each new connection            */
-        @SubscribeEvent
-        public void onConnect(FMLNetworkEvent.ClientConnectedToServerEvent evt) {
-            attach(evt.manager);
-        }
-
-        private void attach(NetworkManager mgr) {
-            if (mgr == null || mgr.channel() == null) return;
-            if (mgr.channel().pipeline().get("tpsoverlay") != null) return; // already there
-
-            mgr.channel().pipeline().addAfter(
-                    "packet_handler",
-                    "tpsoverlay",
-                    new SimpleChannelInboundHandler<Packet<?>>() {
-
-                        @Override
-                        protected void channelRead0(ChannelHandlerContext ctx, Packet<?> pkt) throws Exception {
-                            if (pkt instanceof S03PacketTimeUpdate) {
-                                long worldTime = ((S03PacketTimeUpdate) pkt).getWorldTime();
-                                recordTimeUpdate(worldTime);
-                            } else if (pkt instanceof S00PacketKeepAlive) {
-                                recordKeepAlive();
-                            }
-                            ctx.fireChannelRead(pkt); // keep Forge happy
-                        }
-                    });
-        }
+    /** Install the handler once for each new connection               */
+    @SubscribeEvent
+    public void onConnect(FMLNetworkEvent.ClientConnectedToServerEvent evt) {
+        attach(evt.manager);
     }
+
+    private void attach(NetworkManager mgr) {
+        if (mgr == null || mgr.channel() == null) return;
+        if (mgr.channel().pipeline().get("tpsoverlay") != null) return; // already there
+
+        // ── ❶ RESET our learned keep‑alive cadence for this connection ─────────
+        TPSOverlayMod.this.keepAliveBaseIntervalNanos = null;
+        TPSOverlayMod.this.lastKeepAliveNanos        = -1;
+        // ───────────────────────────────────────────────────────────────────────
+
+        mgr.channel().pipeline().addAfter(
+                "packet_handler",
+                "tpsoverlay",
+                new SimpleChannelInboundHandler<Packet<?>>() {
+
+                    @Override
+                    protected void channelRead0(ChannelHandlerContext ctx, Packet<?> pkt) throws Exception {
+                        if (pkt instanceof S03PacketTimeUpdate) {
+                            long worldTime = ((S03PacketTimeUpdate) pkt).getWorldTime();
+                            recordTimeUpdate(worldTime);
+                        } else if (pkt instanceof S00PacketKeepAlive) {
+                            recordKeepAlive();
+                        }
+                        ctx.fireChannelRead(pkt); // keep Forge happy
+                    }
+                });
+    }
+}
+
 }
