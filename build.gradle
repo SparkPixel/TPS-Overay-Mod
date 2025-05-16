@@ -1,0 +1,61 @@
+// ---------------------------------------------------------------------------
+// build.gradle – Minecraft 1.8.9 mod built with ForgeGradle 2.1.2
+// ---------------------------------------------------------------------------
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.minecraftforge.net' }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.1.2'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+
+// ---------------------------------------------------------------------------
+// Project identifiers
+// ---------------------------------------------------------------------------
+version          = '1.0'
+group            = 'com.example'
+archivesBaseName = 'tpsoverlay'
+
+// ---------------------------------------------------------------------------
+// Repositories used by the *main* project (not the buildscript above)
+// ---------------------------------------------------------------------------
+repositories {
+    mavenCentral()
+    maven { url = 'https://maven.minecraftforge.net' }
+    // extra mirror that also hosts MCP mapping exports
+    maven { url = 'https://repo.spongepowered.org/maven' }
+}
+
+// ---------------------------------------------------------------------------
+// ForgeGradle configuration
+// ---------------------------------------------------------------------------
+minecraft {
+    version   = '1.8.9-11.15.1.2318-1.8.9'
+    runDir    = 'run'
+    mappings  = 'stable_22'
+}
+
+// ---------------------------------------------------------------------------
+// Java compiler settings
+// ---------------------------------------------------------------------------
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileJava.options.encoding = 'UTF-8'
+
+// ---------------------------------------------------------------------------
+// Optional: a de‑obfuscated‑names jar for dev environments
+// ---------------------------------------------------------------------------
+task deobfJar(type: Jar) {
+    from sourceSets.main.output
+    classifier = 'deobf'              // legacy DSL keyword in Gradle 2.x
+}
+
+artifacts {
+    archives deobfJar                 // <-- must come *after* the task above
+}
