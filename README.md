@@ -1,34 +1,58 @@
-# TPS Overlay Mod
+# TPS Overlay – Forge 1.8.9
 
-![Minecraft 1.8.9](https://img.shields.io/badge/Minecraft-1.8.9-brightgreen)
-![Forge](https://img.shields.io/badge/Forge-11.15.1.2318-yellow)
+A lightweight client‑side mod that prints the **server TPS** in the upper‑left corner of your HUD.
+Version **1.1** adds a keep‑alive fallback so it works on large networks such as **Hypixel SkyBlock**.
 
-A lightweight Minecraft Forge mod that displays the server's ticks-per-second (TPS) in the in-game HUD. Ideal for monitoring server performance during gameplay.
+---
 
-## Features
+## 🎮 For Players
 
-* **Real-time TPS calculation** by intercepting `S03PacketTimeUpdate` packets.
-* **Sliding-window smoothing** over the last 20 ticks to provide a stable TPS reading (capped at 20.00).
-* **Proxy-server override**: forces a 20.00 TPS display on Hypixel and PikaNetwork lobbies (which throttle time updates).
-* **Single-player detection**: automatically hides the overlay when running an integrated (single-player) server.
+| Requirement   | Recommended version               |
+| ------------- | --------------------------------- |
+| **Minecraft** | **1.8.9**                         |
+| **Forge**     | 11.15.1.2318 (latest 1.8.9 build) |
 
-## Requirements
+1. **Download** `tpsoverlay‑1.1.jar` from the Releases page.
+2. **Install Forge 1.8.9** if you haven’t already.
+3. Drop the JAR into your `<minecraft>/mods/` folder.
+4. Launch Minecraft → *Mods* tab → *TPS Overlay* should appear.
 
-* **Minecraft** 1.8.9
-* **Forge** 1.8.9-11.15.1.2318-1.8.9
-* **Java** 8
+That’s it! Join any 1.8.9‑compatible server and watch the top‑left corner.
 
-## Installation
+---
 
-### For Players
+## ⚙️  What the Numbers Mean
 
-1. Download the latest `tpsoverlay-<version>.jar` from the [Releases](https://github.com/yourusername/tpsoverlay/releases).
-2. Move the `.jar` file into your Minecraft `mods/` folder.
-3. Launch Minecraft with the **Forge 1.8.9** profile.
-4. Join a multiplayer server and watch the TPS readout in the top-left corner.
+| Overlay reads | Interpretation                                             |
+| ------------- | ---------------------------------------------------------- |
+| **20.00**     | Perfect—server is ticking at the vanilla maximum.          |
+| **15 ‑ 19**   | Minor lag spike or heavy load. Usually self‑corrects.      |
+| **< 10**      | Serious server lag. Expect block delay and rubber‑banding. |
 
-## Usage
+The mod averages the last 100 samples, so transient jitters won’t flicker the display.
 
-* The TPS overlay appears automatically when connected to any **remote** server.
-* On **Hypixel** or **PikaNetwork** lobbies, the overlay is forced to show **20.00** TPS due to proxy throttling.
-  \$1- On private SMPs (vanilla, Spigot/Paper, Forge), you’ll see real \~20.00 TPS readings.
+---
+
+## 🔍 How It Works
+
+* **Primary sampling** – uses `S03PacketTimeUpdate` (sent every 20 ticks).
+* **Fallback sampling** – uses `S00PacketKeepAlive` intervals when the server throttles `S03` (e.g., Hypixel).
+* **Sliding‑window average** of 100 samples smooths both data streams.
+
+The entire algorithm lives in **`TPSOverlayMod.java`** (≈ 180 LOC) and runs only on the client thread—no packets are sent to the server.
+
+---
+
+## 🙋 FAQ
+
+> **Q: Is this bannable on Hypixel / competitive servers?**
+> **A:** The mod is purely cosmetic and never modifies gameplay packets. It’s functionally similar to status HUD mods commonly whitelisted by Hypixel. As always, use at your own risk and keep the jar unmodified.
+
+> **Q: Why does the overlay sometimes freeze at 20 TPS?**
+> **A:** If the server suppresses both time‑update and keep‑alive packets during extreme lag, there’s no new data to sample. The display holds the last value until packets resume.
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** – see `LICENSE` for details.
